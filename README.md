@@ -43,36 +43,45 @@ This project demonstrates how to load RDF data into ArangoDB using three differe
 
 ## Quick Start
 
-### Local ArangoDB Setup
+### Local Deployment
 
 Ensure your local ArangoDB is running on Docker:
 ```bash
 docker run -p 8529:8529 -e ARANGO_ROOT_PASSWORD=openSesame arangodb/arangodb:latest
 ```
 
-### Load FOAF Data into All Three Models
-
+**Load FOAF Data into All Three Models:**
 ```bash
 python foaf_demo.py
 ```
 
-This will:
-- Connect to your local ArangoDB instance
-- Load 300 FOAF persons with ~8,000 RDF triples
-- Create three databases: `FOAF-RPT`, `FOAF-PGT`, `FOAF-PGT-Node`
-- Display statistics for each model
-
-### Run Query Demonstrations
-
+**Run Customer Demo:**
 ```bash
-python query_demo.py
+python customer_demo.py
 ```
 
-This demonstrates various AQL queries across all three models, including:
-- Basic person searches
-- Social network analysis
-- Graph traversals
-- Comparative queries
+### Cloud Deployment
+
+**Set Cloud Password (not stored in repo):**
+```bash
+export ARANGO_CLOUD_PASSWORD="your_cloud_password"
+```
+
+**Deploy to Cloud:**
+```bash
+python foaf_demo.py --cloud
+```
+
+**Run Cloud Demo:**
+```bash
+python cloud_demo.py
+```
+
+This will:
+- Connect to your cloud ArangoDB instance
+- Load 300 FOAF persons with ~10,000 RDF triples
+- Create three databases: `FOAF-RPT`, `FOAF-PGT`, `FOAF-PGT-Node`
+- Display statistics for each model and run demo queries
 
 ## Database Models
 
@@ -229,8 +238,14 @@ The sample data contains:
 
 ### 4. **Real-world Data**
 - 300 person social network
-- Realistic relationships and properties
+- Realistic relationships and properties  
 - Demonstrates scalability potential
+
+### Demo Scripts Available:
+- `customer_demo.py` - Perfect for customer presentations (local)
+- `cloud_demo.py` - Cloud deployment demonstration
+- `live_demo.py` - Interactive step-by-step presentation format
+- `simple_queries.py` - Basic working query examples
 
 ## License
 
