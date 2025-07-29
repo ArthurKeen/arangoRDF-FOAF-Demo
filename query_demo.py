@@ -244,96 +244,128 @@ class FOAFQueryDemo:
     def demo_pgt_node_queries(self):
         """Demonstrate queries on PGT-Node database"""
         logger.info("\n" + "="*60) 
-        logger.info("PGT-NODE (ALTERNATIVE QUERYING APPROACH) QUERIES")
+        logger.info("PGT-NODE (SINGLE NODE COLLECTION) QUERIES")
         logger.info("="*60)
         
-        # Query 1: Find all collections and their document counts
+        # Query 1: Count entities by type
         self.execute_query(
             "pgt_node",
             """
-            FOR collection_info IN [
-                {name: "Person", type: "foaf:Person"},
-                {name: "Organization", type: "foaf:Organization"}
-            ]
-            RETURN {
-                collection: collection_info.name,
-                count: LENGTH(FOR doc IN @@collection RETURN doc),
-                type: collection_info.type
-            }
-            """,
-            "Count documents by collection type"
-        )
-        
-        # Query 2: Find Person documents with properties (unified view)
-        self.execute_query(
-            "pgt_node",
-            """
-            FOR person IN Person
-            RETURN {
-                key: person._key,
-                name: person.`http://xmlns.com/foaf/0.1/name`,
-                age: person.`http://xmlns.com/foaf/0.1/age`,
-                title: person.`http://xmlns.com/foaf/0.1/title`,
-                email: person.`http://xmlns.com/foaf/0.1/mbox`
-            }
-            LIMIT 10
-            """,
-            "Find Person documents with their properties (unified approach)"
-        )
-        
-        # Query 3: Cross-collection graph traversal simulation
-        self.execute_query(
-            "pgt_node",
-            """
-            FOR start_person IN Person
-            FILTER start_person.`http://xmlns.com/foaf/0.1/name` != null
-            LIMIT 1
-            
-            FOR v, e, p IN 1..2 OUTBOUND start_person._id knows
-            RETURN {
-                start_person: start_person.`http://xmlns.com/foaf/0.1/name`,
-                connected_person: v.`http://xmlns.com/foaf/0.1/name`,
-                path_length: LENGTH(p.edges),
-                connection_type: "knows"
-            }
-            LIMIT 15
-            """,
-            "Multi-hop traversal across unified schema"
-        )
-        
-        # Query 4: Analyze network centrality (improved approach)
-        self.execute_query(
-            "pgt_node",
-            """
-            FOR person IN Person
-            
-            LET outgoing_connections = (
-                FOR edge IN knows
-                FILTER edge._from == person._id
-                RETURN 1
+            LET types = (
+                FOR t IN type
+                FOR c IN Class
+                FILTER t._to == c._id
+                COLLECT class = c._uri WITH COUNT INTO count
+                RETURN { type: class, count: count }
             )
-            
-            LET incoming_connections = (
-                FOR edge IN knows
-                FILTER edge._to == person._id  
-                RETURN 1
-            )
-            
-            LET total_connections = LENGTH(outgoing_connections) + LENGTH(incoming_connections)
-            
-            FILTER total_connections > 3
-            
-            RETURN {
-                name: person.`http://xmlns.com/foaf/0.1/name`,
-                title: person.`http://xmlns.com/foaf/0.1/title`,
-                outgoing_count: LENGTH(outgoing_connections),
-                incoming_count: LENGTH(incoming_connections),
-                total_connections: total_connections
-            }
-            SORT total_connections DESC
-            LIMIT 10
+            FOR t IN types
+            SORT t.count DESC
+            RETURN t
             """,
-            "Find highly connected people (network centrality analysis)"
+            "Count entities by type in Node collection"
+        )
+        
+        # Query 2: Find Person entities with their properties
+        self.execute_query(
+            "pgt_node",
+            """
+            LET person_class = FIRST(
+                FOR c IN Class
+                FILTER c._uri == 'http://xmlns.com/foaf/0.1/Person'
+                RETURN c._id
+            )
+            LET persons = (
+                FOR t IN type
+                FILTER t._to == person_class
+                FOR node IN Node
+                FILTER node._id == t._from
+                LIMIT 10
+                RETURN {
+                    key: node._key,
+                    name: node.name,
+                    firstName: node.firstName,
+                    familyName: node.familyName,
+                    age: node.age,
+                    title: node.title
+                }
+            )
+            RETURN persons
+            """,
+            "Find Person entities with their properties"
+        )
+        
+        # Query 3: Find people by age range
+        self.execute_query(
+            "pgt_node",
+            """
+            LET person_class = FIRST(
+                FOR c IN Class
+                FILTER c._uri == 'http://xmlns.com/foaf/0.1/Person'
+                RETURN c._id
+            )
+            LET persons = (
+                FOR t IN type
+                FILTER t._to == person_class
+                FOR node IN Node
+                FILTER node._id == t._from
+                FILTER node.age != null
+                FILTER node.age >= 25 AND node.age <= 35
+                SORT node.age
+                RETURN {
+                    name: node.name,
+                    age: node.age,
+                    title: node.title
+                }
+            )
+            RETURN persons
+            """,
+            "Find people aged 25-35"
+        )
+        
+        # Query 4: Analyze network connections
+        self.execute_query(
+            "pgt_node",
+            """
+            LET person_class = FIRST(
+                FOR c IN Class
+                FILTER c._uri == 'http://xmlns.com/foaf/0.1/Person'
+                RETURN c._id
+            )
+            LET persons = (
+                FOR t IN type
+                FILTER t._to == person_class
+                FOR node IN Node
+                FILTER node._id == t._from
+                
+                LET outgoing_knows = (
+                    FOR edge IN knows
+                    FILTER edge._from == node._id
+                    RETURN 1
+                )
+                
+                LET incoming_knows = (
+                    FOR edge IN knows
+                    FILTER edge._to == node._id
+                    RETURN 1
+                )
+                
+                LET total_connections = LENGTH(outgoing_knows) + LENGTH(incoming_knows)
+                
+                FILTER total_connections > 0
+                SORT total_connections DESC
+                LIMIT 10
+                
+                RETURN {
+                    name: node.name,
+                    title: node.title,
+                    outgoing_count: LENGTH(outgoing_knows),
+                    incoming_count: LENGTH(incoming_knows),
+                    total_connections: total_connections
+                }
+            )
+            RETURN persons
+            """,
+            "Find most connected people in the network"
         )
     
     def demo_comparative_queries(self):
@@ -364,8 +396,15 @@ class FOAFQueryDemo:
                     result = self.execute_query(
                         model_type,
                         """
-                        FOR node IN node
-                        FILTER node.`http://www.w3.org/1999/02/22-rdf-syntax-ns#type` LIKE "%foaf/0.1/Person"
+                        LET person_class = FIRST(
+                            FOR c IN Class
+                            FILTER c._uri == 'http://xmlns.com/foaf/0.1/Person'
+                            RETURN c._id
+                        )
+                        FOR t IN type
+                        FILTER t._to == person_class
+                        FOR node IN Node
+                        FILTER node._id == t._from
                         RETURN node
                         """,
                         f"Total Person nodes in {db_name}"

@@ -162,12 +162,12 @@ class FOAFDemo:
             logger.info("Loading data using PGT-Node model...")
             arango_rdf = self.arango_rdf_instances["pgt_node"]
             
-            # PGT model - the single collection behavior will be demonstrated in queries
-            # For now, we'll load with standard PGT and show how to query across collections
+            # PGT model with single Node collection for all vertices
             arango_rdf.rdf_to_arangodb_by_pgt(
                 name=config.GRAPH_NAMES["pgt_node"],
                 rdf_graph=foaf_graph,
-                overwrite_graph=True
+                overwrite_graph=True,
+                resource_collection_name="Node"  # This will put all vertices in a "Node" collection
             )
             
             logger.info("PGT-Node model loaded successfully")

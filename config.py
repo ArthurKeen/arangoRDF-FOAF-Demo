@@ -32,8 +32,8 @@ DATABASE_NAMES = {
 
 # Data file paths
 DATA_PATHS = {
-    "foaf_ontology": "/Users/arthurkeen/data/semantics/foaf/foaf.ttl",
-    "foaf_data": "/Users/arthurkeen/data/semantics/foaf/foaf-data.ttl"
+    "foaf_ontology": "~/data/semantics/foaf/foaf.rdf",
+    "foaf_data": "~/data/semantics/foaf/foaf-data.ttl"
 }
 
 # Graph names
