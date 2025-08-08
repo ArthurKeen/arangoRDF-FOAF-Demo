@@ -27,18 +27,18 @@ CLOUD_CONFIG = {
 DATABASE_NAMES = {
     "rpt": "FOAF-RPT",
     "pgt": "FOAF-PGT", 
-    "pgt_node": "FOAF-PGT-Node"
+    "lpgt": "FOAF-LPGT"
 }
 
 # Data file paths
 DATA_PATHS = {
-    "foaf_ontology": "~/data/semantics/foaf/foaf.rdf",
-    "foaf_data": "~/data/semantics/foaf/foaf-data.ttl"
+    "foaf_ontology": "/Users/arthurkeen/data/semantics/foaf/foaf.rdf",
+    "foaf_data": "/Users/arthurkeen/data/semantics/foaf/foaf-data.ttl"
 }
 
 # Graph names
 GRAPH_NAMES = {
     "rpt": "foaf_rpt_graph",
     "pgt": "foaf_pgt_graph",
-    "pgt_node": "foaf_pgt_node_graph"
+    "lpgt": "foaf_lpgt_graph"
 } 
